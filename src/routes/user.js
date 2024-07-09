@@ -9,7 +9,7 @@ const idValidation = require("../middlewares/idValidation");
 const permission = require("../middlewares/permissions");
 
 //* /users
-router.route("/").get(permission.isLogin, user.list).post(user.create);
+router.route("/").get(permission.isAdmin, user.list).post(user.create);
 
 router
 	.route("/:id")

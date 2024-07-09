@@ -1,4 +1,5 @@
 "use strict";
+const { CustomError } = require("../errors/customError");
 /* -------------------------------------------------------
     NODEJS EXPRESS | CLARUSWAY FullStack Team
 ------------------------------------------------------- */
@@ -45,19 +46,28 @@ module.exports = {
             #swagger.summary = "Get Single User"
         */
 
+		//* admin değilse her halükarda kullanıcya kendi bilgilerini döndür
 		let customFilter = {};
 		if (!req.user.isAdmin) {
-			customFilter = { _id: req.user - _id };
+			customFilter = { _id: req.user._id };
 		} else {
 			customFilter = { _id: req.params.id };
 		}
 		const data = await User.findOne(customFilter);
+
+		//? admin değilse ve istediği bilgiler kendine ait değilse o zaman kullancıya hata döndür
+		// if(!req.user.isAdmin){
+		//   if(req.params.id != req.user._id){
+		//     throw new CustomError("No permission! you must be admin or own")
+		//   }
+		// }
+
+		// const data = await User.findOne({ _id: req.params.id });
 		res.status(200).send({
 			error: false,
 			data,
 		});
 	},
-
 	update: async (req, res) => {
 		/*
             #swagger.tags = ["Users"]
@@ -65,13 +75,25 @@ module.exports = {
         */
 		let customFilter = {};
 		if (!req.user.isAdmin) {
-			customFilter = { _id: req.user - _id }; //*admin degilse istegi atan user i güncelle
+			customFilter = { _id: req.user._id }; //* admin değilse değişimi istenen user değil isteği atan userı güncelle
 		} else {
 			customFilter = { _id: req.params.id };
 		}
 		const data = await User.updateOne(customFilter, req.body, {
 			runValidators: true,
 		});
+
+		//? admin değilse ve istediği bilgiler kendine ait değilse o zaman kullancıya hata döndür
+		// if(!req.user.isAdmin){
+		//   if(req.params.id != req.user._id){
+		//     throw new CustomError("No permission! you must be admin or own")
+		//   }
+		// }
+
+		// const data = await User.updateOne(customFilter, req.body, {
+		//   runValidators: true,
+		// });
+
 		res.status(202).send({
 			error: false,
 			data,
