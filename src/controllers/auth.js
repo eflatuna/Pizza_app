@@ -7,6 +7,7 @@ const User = require("../models/user");
 const Token = require("../models/token");
 const { CustomError } = require("../errors/customError");
 const passwordEncrypt = require("../helpers/passwordEncrypt");
+const jwt = require("jsonwebtoken");
 
 module.exports = {
 	login: async (req, res) => {
@@ -37,9 +38,52 @@ module.exports = {
 							token: passwordEncrypt(user._id + Date.now()),
 						});
 					}
+					/*Simple Token*/
+					/*JWT*/
+					/*ACCESS TOKEN*/
+					const accessInfo = {
+						key: process.env.ACCESS_KEY,
+						time: process.env.ACCESS_EXP || "5m",
+						data: {
+							_id: user._id,
+							id: user.id,
+							username: user.username,
+							email: user.email,
+							password: user.password,
+							isActive: user.isActive,
+							isAdmin: user.isAdmin,
+						},
+					};
+					/*refresh token*/
+					const refreshInfo = {
+						key: process.env.REFRESH_KEY,
+						time: process.env.REFRESH_EXP || "3d",
+						data: {
+							_id: user._id,
+							id: user.id,
+							email: user.email,
+							password: user.password,
+						},
+					};
+
+					//jwt.sign(data,secret_key,options)
+					const accessToken = jwt.sign(
+						accessInfo.data,
+						accessInfo.key,
+						{ expiresIn: accessInfo.time }
+					);
+					const refreshToken = jwt.sign(
+						refreshInfo.data,
+						refreshInfo.key,
+						{ expiresIn: accessInfo.time }
+					);
 
 					res.status(200).send({
 						error: false,
+						bearer: {
+							access: accessToken,
+							refresh: refreshToken,
+						},
 						token: tokenData.token,
 						user,
 					});
