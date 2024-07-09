@@ -21,7 +21,12 @@ module.exports = {
             `
         */
 
-		const data = await res.getModelList(Order);
+		let customFilter = {};
+		if (!req.user.isAdmin) {
+			customFilter = { userId: req.user._id };
+		}
+
+		const data = await res.getModelList(Order, customFilter);
 		res.status(200).send({
 			error: false,
 			details: await res.getModelListDetails,
