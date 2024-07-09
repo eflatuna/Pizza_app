@@ -127,4 +127,10 @@ const OrderSchema = new mongoose.Schema(
 	}
 );
 
+OrderSchema.pre("save", function (next) {
+	// do stuff
+	this.amount = this.price * this.quantity;
+	next();
+});
+
 module.exports = mongoose.model("Order", OrderSchema);
