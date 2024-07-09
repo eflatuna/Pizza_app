@@ -31,6 +31,7 @@ module.exports = {
 			const user = await User.findOne({ $or: [{ username }, { email }] });
 			if (user && user.password == passwordEncrypt(password)) {
 				if (user.isActive) {
+					/* Simple Token */
 					let tokenData = await Token.findOne({ userId: user._id });
 					if (!tokenData) {
 						tokenData = await Token.create({
@@ -38,15 +39,15 @@ module.exports = {
 							token: passwordEncrypt(user._id + Date.now()),
 						});
 					}
-					/*Simple Token*/
-					/*JWT*/
-					/*ACCESS TOKEN*/
+					/* Simple Token */
+					/* JWT */
+					// accessToken
 					const accessInfo = {
 						key: process.env.ACCESS_KEY,
 						time: process.env.ACCESS_EXP || "5m",
 						data: {
 							_id: user._id,
-							id: user.id,
+							id: user._id,
 							username: user.username,
 							email: user.email,
 							password: user.password,
@@ -54,29 +55,35 @@ module.exports = {
 							isAdmin: user.isAdmin,
 						},
 					};
-					/*refresh token*/
+
+					// refreshtoken
 					const refreshInfo = {
 						key: process.env.REFRESH_KEY,
 						time: process.env.REFRESH_EXP || "3d",
 						data: {
 							_id: user._id,
-							id: user.id,
-							email: user.email,
+							id: user._id,
 							password: user.password,
 						},
 					};
 
-					//jwt.sign(data,secret_key,options)
+					// jwt.sign(data,secret_key,options)
 					const accessToken = jwt.sign(
 						accessInfo.data,
 						accessInfo.key,
-						{ expiresIn: accessInfo.time }
+						{
+							expiresIn: accessInfo.time,
+						}
 					);
+
 					const refreshToken = jwt.sign(
 						refreshInfo.data,
 						refreshInfo.key,
-						{ expiresIn: accessInfo.time }
+						{
+							expiresIn: refreshInfo.time,
+						}
 					);
+					/* JWT */
 
 					res.status(200).send({
 						error: false,
@@ -98,6 +105,45 @@ module.exports = {
 				"Please enter username/email and password!",
 				401
 			);
+		}
+	},
+	refresh: async (req, res) => {
+		/*
+            #swagger.tags = ["Authentication"]
+            #swagger.summary = "JWT : Refresh"
+            #swagger.description = 'Refresh token.'
+        */
+
+		const refreshToken = req.body?.bearer.refresh;
+
+		if (refreshToken) {
+			const refreshData = jwt.verify(
+				refreshToken,
+				process.env.REFRESH_KEY
+			);
+			if (refreshData) {
+				const user = await User.findOne({ _id: refreshData._id });
+				if (user && user.password == refreshData.password) {
+					res.status(200).send({
+						error: false,
+						bearer: {
+							access: jwt.sign(
+								user.toJSON(),
+								process.env.ACCESS_KEY,
+								{
+									expiresIn: process.env.ACCESS_EXP,
+								}
+							),
+						},
+					});
+				} else {
+					throw new CustomError("Wrong data!", 401);
+				}
+			} else {
+				throw new CustomError("Refresh data is wrong!", 401);
+			}
+		} else {
+			throw new CustomError("Please enter refresh token!", 401);
 		}
 	},
 	logout: async (req, res) => {
