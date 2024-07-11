@@ -70,7 +70,15 @@ const nodemailer = require("nodemailer");
 //   web: 'https://ethereal.email',
 //   mxEnabled: false
 // }
-
+const transporter = nodemailer.createTransport({
+	host: "smtp.ethereal.email",
+	port: 587,
+	secure: false, // Use `true` for port 465, `false` for all other ports
+	auth: {
+		user: "i6lewdenbhtzvkf6@ethereal.email",
+		pass: "y1gcZwxrGxcZ8zZrNC",
+	},
+});
 /* ------------------------------------------------------- */
 // Routes:
 
